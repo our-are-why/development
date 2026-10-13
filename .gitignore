@@ -1,0 +1,8 @@
+# This repository tracks the container tooling and Development's own project
+# files. Projects inside this folder, present and future, and the code-server
+# folders stay out: top-level entries are ignored unless listed below.
+/*
+!/.apple-container/
+!/.claude/
+!/.environment/
+!/.gitignore

@@ -1,0 +1,40 @@
+# Shared dev image that projects build FROM (as "image_develop-base").
+# Pinned to what codercom/code-server:latest resolved to on 2026-10-12; bump it
+# deliberately, then rebuild this image and the projects.
+FROM codercom/code-server:4.141.0@sha256:72ab24b5680ee597dd647b30d82625752f40109b5f61bef90ffbf1ea1f02dbb8
+
+USER root
+
+# Claude Code requires 'ps' (procps) to manage background tasks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash && \
+    mv /root/.local/bin/agy /usr/local/bin/
+
+ENV DISABLE_AUTOUPDATER=1
+# The installer's own copy under /root/.local is removed in the same step, so
+# the image doesn't carry a second copy
+RUN curl -fsSL https://claude.ai/install.sh | bash && \
+    cp -L /root/.local/bin/claude /usr/local/bin/claude && \
+    chmod 755 /usr/local/bin/claude && \
+    rm -rf /root/.local
+
+# Relays the OAuth callback of a Claude Code login to Claude Code in the
+# container
+COPY --chmod=755 assets/relayOAuthCallback_Claude.sh \
+    /usr/local/bin/relayOAuthCallback_Claude
+
+# code-server keeps its data, extensions included, in the project's
+# .coder-data; linkSettings_Shared.sh links in the shared settings at container
+# start. The ENTRYPOINT is code-server's own plus --user-data-dir, and opens
+# the project folder in place of /home/coder.
+COPY --chmod=755 assets/linkSettings_Shared.sh \
+    /entrypoint.d/linkSettings_Shared.sh
+ENTRYPOINT ["/usr/bin/entrypoint.sh", "--bind-addr", "0.0.0.0:8080", \
+            "--user-data-dir", "/home/coder/project/.coder-data", \
+            "/home/coder/project"]
+
+USER coder
+WORKDIR /home/coder

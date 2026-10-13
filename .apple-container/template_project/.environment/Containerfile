@@ -1,0 +1,12 @@
+# Shared dev tooling comes from image_develop-base: see
+# .apple-container/image_develop-base/
+FROM image_develop-base
+
+# Project-specific tools go here. image_develop-base ends as USER coder, so
+# switch to root for installs and back afterwards, e.g.:
+#
+# USER root
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     <package> \
+#     && rm -rf /var/lib/apt/lists/*
+# USER coder
